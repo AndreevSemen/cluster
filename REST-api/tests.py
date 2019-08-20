@@ -34,14 +34,14 @@ def ips_equal_to(arr, ip):
 
 
 class RestAPITest(unittest.TestCase):
-    def empty_table(self):
+    def test_empty_table(self):
         self.assertTrue(empty(get_result()["servers"]))
 
-    def post_to_empty(self):
+    def test_post_to_empty(self):
         curr_json = servers_infos[0]
         self.assertTrue(empty(post_result(curr_json)["servers"]))
 
-    def post_neighbours(self):
+    def test_post_neighbours(self):
         curr_json = servers_infos[1]
         resp_json = post_result(curr_json)
         self.assertEqual(len(resp_json["servers"]), 1)
@@ -56,7 +56,7 @@ class RestAPITest(unittest.TestCase):
         resp_json = post_result(curr_json)
         self.assertTrue(empty(resp_json["servers"]))
 
-    def update(self):
+    def test_update(self):
         old_json = copy.deepcopy(servers_infos[0])
         new_json = copy.deepcopy(servers_infos[0])
         new_json["state"] = "inactive"
@@ -70,7 +70,7 @@ class RestAPITest(unittest.TestCase):
         self.assertTrue(old_json not in resp_json["servers"])
         self.assertTrue(new_json in resp_json["servers"])
 
-    def incorrect_state(self):
+    def test_incorrect_state(self):
         incorrect_json = copy.deepcopy(servers_infos[0])
         incorrect_json["state"] = "semi-alive"
 
