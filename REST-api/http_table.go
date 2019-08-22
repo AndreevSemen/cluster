@@ -29,7 +29,7 @@ var database ServerInfoArray;
 func GETALL(w http.ResponseWriter, r *http.Request)  {
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(database); err != nil {
+	if  err := json.NewEncoder(w).Encode(database); err != nil {
 		w.WriteHeader(400)
 		return
 	}
@@ -39,7 +39,9 @@ func GETALL(w http.ResponseWriter, r *http.Request)  {
 
 func POST(w http.ResponseWriter, r *http.Request) {
 	var requestedServer ServerInfo
-	if err := json.NewDecoder(r.Body).Decode(requestedServer); err != nil && !IsValidState(requestedServer) {
+
+
+	if err := json.NewDecoder(r.Body).Decode(&requestedServer); err != nil || !IsValidState(requestedServer) {
 		w.WriteHeader(400)
 		return
 	}
@@ -72,11 +74,17 @@ func POST(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
+func DROP(w http.ResponseWriter, r *http.Request) {
+	database.Servers = nil
+	w.WriteHeader(200)
+}
+
 func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/gossip/table", GETALL).Methods("GET")
 	router.HandleFunc("/gossip/table/update", POST).Methods("POST")
+	router.HandleFunc("/gossip/table/drop", DROP).Methods("DELETE")
 
-	log.Fatal(http.ListenAndServe(":84", router))
+	log.Fatal(http.ListenAndServe(":80", router))
 }

@@ -3,8 +3,9 @@ import json
 import unittest
 import copy
 
-addr = 'http://localhost:84'
-get_url = addr + '/gossip/table'
+server_addr = 'http://localhost:80'
+get_url = server_addr + '/gossip/table'
+drop_url = server_addr + '/gossip/table/drop'
 update_url = get_url + '/update'
 servers_infos = [{"ip": "127.0.0.1", "port": 80, "state": "alive"},
                  {"ip": "127.0.0.1", "port": 81, "state": "dead"},
@@ -13,12 +14,17 @@ servers_infos = [{"ip": "127.0.0.1", "port": 80, "state": "alive"},
                  {"ip": "127.0.0.3", "port": 81, "state": "inactive"}]
 
 
-def get_result():
+def get():
     return json.loads(requests.get(get_url).content)
 
 
-def post_result(in_json):
-    return json.loads(requests.post(update_url, json=in_json).content)
+def post(input_json):
+    return json.loads(requests.post(update_url, json=input_json).content)
+
+
+def DROP_database():
+    resp = requests.delete(drop_url)
+    print(resp.status_code)
 
 
 def empty(arr):
@@ -34,49 +40,64 @@ def ips_equal_to(arr, ip):
 
 
 class RestAPITest(unittest.TestCase):
-    def test_empty_table(self):
-        self.assertTrue(empty(get_result()["servers"]))
+    def test_empty(self):
+        DROP_database()
+
+        res = get()
+        print(res)
+        self.assertTrue(empty(get()["servers"]))
 
     def test_post_to_empty(self):
+        DROP_database()
+
         curr_json = servers_infos[0]
-        self.assertTrue(empty(post_result(curr_json)["servers"]))
+        self.assertTrue(empty(post(curr_json)["servers"]))
 
     def test_post_neighbours(self):
-        curr_json = servers_infos[1]
-        resp_json = post_result(curr_json)
+        DROP_database()
+
+        curr_json = servers_infos[0] # 127.0.0.1:80
+        post(curr_json)
+        curr_json = servers_infos[1] # 127.0.0.1:81
+        resp_json = post(curr_json)
         self.assertEqual(len(resp_json["servers"]), 1)
         self.assertTrue(ips_equal_to(resp_json["servers"], curr_json["ip"]))
 
-        curr_json = servers_infos[2]
-        resp_json = post_result(curr_json)
+        curr_json = servers_infos[2] # 127.0.0.1:82
+        resp_json = post(curr_json)
         self.assertEqual(len(resp_json["servers"]), 2)
         self.assertTrue(ips_equal_to(resp_json["servers"], curr_json["ip"]))
 
-        curr_json = servers_infos[3]
-        resp_json = post_result(curr_json)
+        curr_json = servers_infos[3] # 127.0.0.2:80
+        resp_json = post(curr_json)
         self.assertTrue(empty(resp_json["servers"]))
 
     def test_update(self):
+        DROP_database()
+
         old_json = copy.deepcopy(servers_infos[0])
+        post(old_json)
+
         new_json = copy.deepcopy(servers_infos[0])
         new_json["state"] = "inactive"
 
-        resp_json = get_result()
+        resp_json = get()
         self.assertTrue(old_json in resp_json["servers"])
         self.assertTrue(new_json not in resp_json["servers"])
 
-        post_result(new_json)
-        resp_json = get_result()
+        post(new_json)
+        resp_json = get()
         self.assertTrue(old_json not in resp_json["servers"])
         self.assertTrue(new_json in resp_json["servers"])
 
     def test_incorrect_state(self):
+        DROP_database()
+
         incorrect_json = copy.deepcopy(servers_infos[0])
         incorrect_json["state"] = "semi-alive"
 
-        with self.assertRaises(ValueError):
-            resp_json = post_result(incorrect_json)
-
+        resp = requests.post(update_url, json=incorrect_json)
+        self.assertEqual(resp.status_code, 400)
 
 if __name__ == '__main__':
     unittest.main()
