@@ -24,7 +24,6 @@ def post(input_json):
 
 def DROP_database():
     resp = requests.delete(drop_url)
-    print(resp.status_code)
 
 
 def empty(arr):
@@ -43,8 +42,6 @@ class RestAPITest(unittest.TestCase):
     def test_empty(self):
         DROP_database()
 
-        res = get()
-        print(res)
         self.assertTrue(empty(get()["servers"]))
 
     def test_post_to_empty(self):
@@ -98,6 +95,7 @@ class RestAPITest(unittest.TestCase):
 
         resp = requests.post(update_url, json=incorrect_json)
         self.assertEqual(resp.status_code, 400)
+
 
 if __name__ == '__main__':
     unittest.main()
