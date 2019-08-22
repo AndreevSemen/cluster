@@ -38,7 +38,7 @@ def ips_equal_to(arr, ip):
     return True
 
 
-class RestAPITest(unittest.TestCase):
+class RestAPITableCaseч(unittest.TestCase):
     def test_empty(self):
         DROP_database()
 

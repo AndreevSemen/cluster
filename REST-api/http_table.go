@@ -86,5 +86,5 @@ func main() {
 	router.HandleFunc("/gossip/table/update", POST).Methods("POST")
 	router.HandleFunc("/gossip/table/drop", DROP).Methods("DELETE")
 
-	log.Fatal(http.ListenAndServe(":80", router))
+	log.Fatal(http.ListenAndServe(":81", router))
 }
