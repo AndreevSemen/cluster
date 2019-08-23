@@ -9,13 +9,13 @@ docker:
 
 run:
 	docker run \
-		-p 80:80 \
+		-p 8080:8080 \
 		--rm -it \
 		--name ${container_name} \
 		${docker_name}:${docker_tag}
 daemon:
 	docker run \
-		-p 80:80 \
+		-p 8080:8080 \
 		--rm -d -it \
 		--name ${container_name} \
 		${docker_name}:${docker_tag}
