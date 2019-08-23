@@ -15,7 +15,7 @@ RUN apt-get update                 && \
            time                       \
            github.com/gorilla/mux     
 
-EXPOSE 8080
+EXPOSE 80
 
 COPY . .
 
