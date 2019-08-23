@@ -15,10 +15,11 @@ RUN apt-get update                 && \
            time                       \
            github.com/gorilla/mux     
 
+EXPOSE 80
+
 COPY . .
 
-ENTRYPOINT nginx -c /nginx.conf           && \
-           go run REST-api/http_table.go  && \
+ENTRYPOINT nginx -c /nginx.conf           & \
+           go run REST-api/http_table.go  & \
            go run REST-api/http_time.go
 
-EXPOSE 80
