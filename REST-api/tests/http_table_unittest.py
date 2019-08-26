@@ -3,9 +3,9 @@ import json
 import unittest
 import copy
 
-server_addr = 'http://localhost:80'
+server_addr = 'http://localhost:81'
 get_url = server_addr + '/gossip/table'
-drop_url = server_addr + '/gossip/table/drop'
+drop_url = get_url + '/drop'
 update_url = get_url + '/update'
 servers_infos = [{"ip": "127.0.0.1", "port": 80, "state": "alive"},
                  {"ip": "127.0.0.1", "port": 81, "state": "dead"},
@@ -22,7 +22,7 @@ def post(input_json):
     return json.loads(requests.post(update_url, json=input_json).content)
 
 
-def DROP_database():
+def drop_database():
     resp = requests.delete(drop_url)
 
 
@@ -38,20 +38,20 @@ def ips_equal_to(arr, ip):
     return True
 
 
-class RestAPITableCaseч(unittest.TestCase):
+class RestAPITableCase(unittest.TestCase):
     def test_empty(self):
-        DROP_database()
+        drop_database()
 
         self.assertTrue(empty(get()["servers"]))
 
     def test_post_to_empty(self):
-        DROP_database()
+        drop_database()
 
         curr_json = servers_infos[0]
         self.assertTrue(empty(post(curr_json)["servers"]))
 
     def test_post_neighbours(self):
-        DROP_database()
+        drop_database()
 
         curr_json = servers_infos[0] # 127.0.0.1:80
         post(curr_json)
@@ -70,7 +70,7 @@ class RestAPITableCaseч(unittest.TestCase):
         self.assertTrue(empty(resp_json["servers"]))
 
     def test_update(self):
-        DROP_database()
+        drop_database()
 
         old_json = copy.deepcopy(servers_infos[0])
         post(old_json)
@@ -88,13 +88,13 @@ class RestAPITableCaseч(unittest.TestCase):
         self.assertTrue(new_json in resp_json["servers"])
 
     def test_incorrect_state(self):
-        DROP_database()
+        drop_database()
 
         incorrect_json = copy.deepcopy(servers_infos[0])
         incorrect_json["state"] = "semi-alive"
 
         resp = requests.post(update_url, json=incorrect_json)
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.content, b'sent server with invalid state')
 
 
 if __name__ == '__main__':

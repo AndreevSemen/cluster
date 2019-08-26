@@ -1,6 +1,8 @@
 FROM ubuntu
 
 ENV GOPATH /src/go
+ENV GOSSIP_TABLE_PORT 81
+ENV GOSSIP_TIME_PORT  82
 
 RUN apt-get update                 && \
     apt-get -y install python3        \

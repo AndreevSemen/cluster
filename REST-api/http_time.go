@@ -4,20 +4,21 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
-func TIME(w http.ResponseWriter, r *http.Request) {
+func HttpTimeFunc(w http.ResponseWriter, r *http.Request) {
 	if _, err := w.Write([]byte(time.Now().Format(time.Stamp))); err != nil {
-		w.WriteHeader(505)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 }
 
 func main() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/gossip/time", TIME).Methods("GET")
+	router.HandleFunc("/gossip/time", HttpTimeFunc).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(":82", router))
+	log.Fatal(http.ListenAndServe(":" + os.Getenv("GOSSIP_TIME_PORT"), router))
 }
