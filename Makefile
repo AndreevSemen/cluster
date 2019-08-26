@@ -35,3 +35,9 @@ delete-container:
 	docker images
 	docker rmi ${docker_name}:${docker_tag}
 	docker images
+
+run-tests:
+	sudo make docker && sudo make daemon
+	ping -c 2 google.com
+	python3 REST-api/tests/http_table_unittest.py
+	sudo make stop

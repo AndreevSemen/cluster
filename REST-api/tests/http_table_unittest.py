@@ -3,7 +3,7 @@ import json
 import unittest
 import copy
 
-server_addr = 'http://localhost:81'
+server_addr = 'http://localhost:80'
 get_url = server_addr + '/gossip/table'
 drop_url = get_url + '/drop'
 update_url = get_url + '/update'
