@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 )
 
 type ServerInfo struct {
@@ -14,20 +15,22 @@ type ServerInfo struct {
 	State string `json:"state"`
 }
 
+var states = []string{"alive", "dead", "inactive", "onload"}
+
 type ServerInfoArray struct {
 	Servers []ServerInfo `json:"servers"`
 }
 
 func IsValidState(info ServerInfo) bool {
-	return info.State == "alive"    ||
-		info.State == "onload"   ||
-		info.State == "inactive" ||
-		info.State == "dead"
+	result := sort.SearchStrings(states, info.State)
+	return result < len(states) && info.State == states[result]
 }
 
-var database = make(map[string]map[int]string)
+type ServerMap = map[string]map[int]string
 
-func GetServersArray(database* map[string]map[int]string) ServerInfoArray {
+var database = make(ServerMap)
+
+func GetServersArray(database* ServerMap) ServerInfoArray {
 	var arr ServerInfoArray
 
 	for ip := range *database {
@@ -39,7 +42,7 @@ func GetServersArray(database* map[string]map[int]string) ServerInfoArray {
 	return arr
 }
 
-func NeighbourServersArray(database *map[string]map[int]string, currSrv ServerInfo) ServerInfoArray {
+func NeighbourServersArray(database *ServerMap, currSrv ServerInfo) ServerInfoArray {
 	var arr ServerInfoArray
 
 	for port := range (*database)[currSrv.IP] {
@@ -51,15 +54,16 @@ func NeighbourServersArray(database *map[string]map[int]string, currSrv ServerIn
 	return arr
 }
 
-func AddServerInfo(database *map[string]map[int]string, srv ServerInfo) {
+func AddServerInfo(database *ServerMap, srv ServerInfo) {
 	if (*database)[srv.IP] == nil {
 		(*database)[srv.IP] = make(map[int]string)
 	}
+
 	(*database)[srv.IP][srv.Port] = srv.State
 }
 
-func Empty(database *map[string]map[int]string) {
-	*database = make(map[string]map[int]string)
+func Empty(database *ServerMap) {
+	*database = make(ServerMap)
 }
 
 func HttpGetAll(w http.ResponseWriter, r *http.Request)  {
