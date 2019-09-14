@@ -23,7 +23,7 @@ def post(input_json):
 
 
 def drop_database():
-    resp = requests.delete(drop_url)
+    requests.delete(drop_url)
 
 
 def empty(arr):
@@ -48,7 +48,7 @@ class RestAPITableCase(unittest.TestCase):
         drop_database()
 
         curr_json = servers_infos[0]
-        self.assertTrue(empty(post(curr_json)["servers"]))
+        self.assertTrue(post(curr_json)["servers"])
 
     def test_post_neighbours(self):
         drop_database()

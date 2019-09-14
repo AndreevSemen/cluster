@@ -9,67 +9,68 @@ import (
 	"sort"
 )
 
+var states = []string{"alive", "dead", "inactive", "onload"}
+
 type ServerInfo struct {
 	IP    string `json:"ip"`
 	Port  int    `json:"port"`
 	State string `json:"state"`
 }
-
-var states = []string{"alive", "dead", "inactive", "onload"}
+func (info ServerInfo) IsValidState() bool {
+	result := sort.SearchStrings(states, info.State)
+	return result < len(states) && info.State == states[result]
+}
 
 type ServerInfoArray struct {
 	Servers []ServerInfo `json:"servers"`
 }
 
-func IsValidState(info ServerInfo) bool {
-	result := sort.SearchStrings(states, info.State)
-	return result < len(states) && info.State == states[result]
+
+type ServerMap struct {
+	data map[string]map[int]string
 }
-
-type ServerMap = map[string]map[int]string
-
-var database = make(ServerMap)
-
-func GetServersArray(database* ServerMap) ServerInfoArray {
+func makeServerMap() ServerMap {
+	return ServerMap{make(map[string]map[int]string)}
+}
+func (s ServerMap) GetServersArray() ServerInfoArray {
 	var arr ServerInfoArray
 
-	for ip := range *database {
-		for port := range (*database)[ip] {
-			arr.Servers = append(arr.Servers, ServerInfo{ip,port, (*database)[ip][port]})
+	for ip := range s.data {
+		for port := range s.data[ip] {
+			arr.Servers = append(arr.Servers, ServerInfo{ip,port, s.data[ip][port]})
 		}
 	}
 
 	return arr
 }
-
-func NeighbourServersArray(database *ServerMap, currSrv ServerInfo) ServerInfoArray {
+func (s ServerMap) NeighbourServersArray(currSrv ServerInfo) ServerInfoArray {
 	var arr ServerInfoArray
 
-	for port := range (*database)[currSrv.IP] {
+	for port := range s.data[currSrv.IP] {
 		if port != currSrv.Port {
-			arr.Servers = append(arr.Servers, ServerInfo{currSrv.IP, port, (*database)[currSrv.IP][port]})
+			arr.Servers = append(arr.Servers, ServerInfo{currSrv.IP, port, s.data[currSrv.IP][port]})
 		}
 	}
 
 	return arr
 }
-
-func AddServerInfo(database *ServerMap, srv ServerInfo) {
-	if (*database)[srv.IP] == nil {
-		(*database)[srv.IP] = make(map[int]string)
+func (s ServerMap) AddServerInfo(srv ServerInfo) {
+	if s.data[srv.IP] == nil {
+		s.data[srv.IP] = make(map[int]string)
 	}
 
-	(*database)[srv.IP][srv.Port] = srv.State
+	s.data[srv.IP][srv.Port] = srv.State
+}
+func (s ServerMap) Empty() {
+	s.data = make(map[string]map[int]string)
 }
 
-func Empty(database *ServerMap) {
-	*database = make(ServerMap)
-}
+var database = makeServerMap()
 
 func HttpGetAll(w http.ResponseWriter, r *http.Request)  {
 	w.Header().Set("Content-Type", "application/json")
 
-	if  err := json.NewEncoder(w).Encode(GetServersArray(&database)); err != nil {
+	if  err := json.NewEncoder(w).Encode(database.GetServersArray()); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -85,15 +86,15 @@ func HttpPost(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if !IsValidState(requestedServer) {
+	if !requestedServer.IsValidState() {
 		w.Write([]byte("sent server with invalid state"))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	AddServerInfo(&database, requestedServer)
+	database.AddServerInfo(requestedServer)
 
-	if err := json.NewEncoder(w).Encode(NeighbourServersArray(&database, requestedServer)); err != nil {
+	if err := json.NewEncoder(w).Encode(database.NeighbourServersArray(requestedServer)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -101,7 +102,7 @@ func HttpPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func HttpDropDatabase(w http.ResponseWriter, r *http.Request) {
-	Empty(&database)
+	database.Empty()
 	w.WriteHeader(http.StatusOK)
 }
 
